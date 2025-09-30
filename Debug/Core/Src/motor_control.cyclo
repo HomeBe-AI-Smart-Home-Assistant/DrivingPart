@@ -1,0 +1,11 @@
+../Core/Src/motor_control.c:23:6:Motor_Init	1
+../Core/Src/motor_control.c:35:6:Drive	3
+../Core/Src/motor_control.c:49:6:Stop_All	1
+../Core/Src/motor_control.c:50:6:Move_Forward	1
+../Core/Src/motor_control.c:51:6:Move_Backward	1
+../Core/Src/motor_control.c:52:6:Turn_Left	1
+../Core/Src/motor_control.c:53:6:Turn_Right	1
+../Core/Src/motor_control.c:56:6:Forward_Left	1
+../Core/Src/motor_control.c:57:6:Forward_Right	1
+../Core/Src/motor_control.c:58:6:Backward_Left	1
+../Core/Src/motor_control.c:59:6:Backward_Right	1
