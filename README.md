@@ -92,3 +92,93 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 ```
 
 ---
+### 5. Flow Chart
+1) 보드 내부 데이터 
+flowchart LR
+  subgraph UART["UART2 (115200)"]
+    PC["RPi/PC → 1바이트 명령 (w/a/s/d/x)"] --> RX["USART2 RX IRQ\n(q_push)"]
+  end
+
+  subgraph SENS["센서"]
+    TRIG["PB0 TRIG (GPIO)"] --> ECHO["PB1 ECHO (TIM2_CH4 Input Capture)"]
+    ECHO --> US["폭(μs) → 거리(cm)\n(3샘플 중간값/50ms)"]
+  end
+
+  subgraph CTRL["제어 루프 (TIM4 10ms)"]
+    US --> DECIDE{"거리 < 20cm ?"}
+    CMD["명령 큐 → last_cmd"] -->|else| ACT["명령 수행"]
+    DECIDE -- yes --> AVO["회피 동작 우선\nStop → Backward"]
+    DECIDE -- no --> CMD
+  end
+
+  subgraph MOTOR["모터 구동"]
+    PWM["TIM3 PWM\nCH1=PA6(L) / CH2=PA7(R)"] --> DRIVER["DIR: PB10/11, PB13/14\nENA: PB12"]
+  end
+
+  RX --> CMD
+  AVO --> PWM
+  ACT --> PWM
+
+2) 우선순위 제어 로직
+flowchart TD
+  A[10ms마다 Control_Update()] --> B[Ultrasonic_Read_cm()]
+  B --> C{거리 < 20cm ?}
+  C -- 예 --> D[Stop_All()]
+  D --> E[Move_Backward()]
+  E --> Z[return]
+  C -- 아니오 --> F[큐에서 1바이트 명령 pop]
+  F --> G{w/a/s/d/x?}
+  G -- w --> H[Move_Forward()]
+  G -- a --> I[Turn_Left()]
+  G -- d --> J[Turn_Right()]
+  G -- x --> K[Move_Backward()]
+  G -- 그 외/s --> L[Stop_All()]
+  H --> Z
+  I --> Z
+  J --> Z
+  K --> Z
+  L --> Z
+
+3) 인터럽트/타이머 관계도
+flowchart LR
+  subgraph IRQs["인터럽트 소스"]
+    U2["USART2 RX IRQ"] --> Q["명령 링버퍼 q_push()"]
+    T2R["TIM2_CH4 IC (Rising)"] --> T2F["폴라리티 전환(Falling)"]
+    T2F --> PULSE["폭 계산 (t_end - t_start)"]
+    T4["TIM4 Update (10ms)"] --> CU["Control_Update() 호출"]
+  end
+
+  subgraph Tasks["비차단 처리"]
+    US["Ultrasonic_Read_cm():\nTRIG 간격 50ms 유지,\n3회 측정 중간값"] --> CU
+    CU --> MOTOR["Motor_Set(PWM, DIR)"]
+  end
+
+  Q --> CU
+  PULSE --> US
+
+4) 모터 구동 경로(신호 → 드라이버)
+flowchart LR
+  CMD["last_cmd or 회피 동작"] --> MAP["속도/방향 매핑\n(L,R = -100~100%)"]
+  MAP --> PWM["TIM3 PWM\nCH1=PA6(L) / CH2=PA7(R)"]
+  MAP --> DIR["GPIO DIR\nL: PB10/11, R: PB13/14"]
+  ENA["ENA (PB12)"] --> DRV["모터드라이버"]
+  PWM --> DRV
+  DIR --> DRV
+  DRV --> MOT["모터 (좌/우)"]
+
+5) UART 1바이트 명령 처리(간결 프로토콜)
+sequenceDiagram
+  participant Host as RPi/PC
+  participant UART as USART2 RX IRQ
+  participant Q as 명령 큐
+  participant Loop as Control_Update(10ms)
+
+  Host->>UART: 'w'/'a'/'s'/'d'/'x'
+  UART->>Q: q_push(byte)
+  Loop->>Q: q_pop(byte?)
+  alt 장애물 가까움(<20cm)
+    Loop-->>Loop: 회피 동작 우선 (Stop→Backward)
+  else 정상
+    Loop-->>Loop: 최근 명령 수행
+  end
+  
