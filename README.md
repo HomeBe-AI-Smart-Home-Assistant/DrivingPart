@@ -93,7 +93,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 ---
 ### 5. Flow Chart
-1) 보드 내부 데이터 
+1) 보드 내부 데이터
+```mermaid
 flowchart LR
   subgraph UART["UART2 (115200)"]
     PC["RPi/PC → 1바이트 명령 (w/a/s/d/x)"] --> RX["USART2 RX IRQ\n(q_push)"]
@@ -118,8 +119,10 @@ flowchart LR
   RX --> CMD
   AVO --> PWM
   ACT --> PWM
+```
 
 2) 우선순위 제어 로직
+```mermaid
 flowchart TD
   A[10ms마다 Control_Update()] --> B[Ultrasonic_Read_cm()]
   B --> C{거리 < 20cm ?}
@@ -138,8 +141,10 @@ flowchart TD
   J --> Z
   K --> Z
   L --> Z
+```
 
 3) 인터럽트/타이머 관계도
+```mermaid
 flowchart LR
   subgraph IRQs["인터럽트 소스"]
     U2["USART2 RX IRQ"] --> Q["명령 링버퍼 q_push()"]
@@ -155,8 +160,10 @@ flowchart LR
 
   Q --> CU
   PULSE --> US
+```
 
 4) 모터 구동 경로(신호 → 드라이버)
+```mermaid
 flowchart LR
   CMD["last_cmd or 회피 동작"] --> MAP["속도/방향 매핑\n(L,R = -100~100%)"]
   MAP --> PWM["TIM3 PWM\nCH1=PA6(L) / CH2=PA7(R)"]
@@ -165,8 +172,10 @@ flowchart LR
   PWM --> DRV
   DIR --> DRV
   DRV --> MOT["모터 (좌/우)"]
+```
 
 5) UART 1바이트 명령 처리(간결 프로토콜)
+```mermaid
 sequenceDiagram
   participant Host as RPi/PC
   participant UART as USART2 RX IRQ
@@ -181,4 +190,7 @@ sequenceDiagram
   else 정상
     Loop-->>Loop: 최근 명령 수행
   end
+```
+---
   
+
