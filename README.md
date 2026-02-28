@@ -25,8 +25,6 @@
 - **초음파**: TRIG=PB0(GPIO), ECHO=PB1(**TIM2_CH4 입력캡처, 1MHz**)  
 - **제어틱**: **TIM4 10ms** (업데이트 인터럽트)
 
-> 실제 보드에 맞게 `.ioc`에서 핀만 바꾸면 됩니다.
-
 ---
 
 ## 3) Flow Chart
@@ -193,4 +191,5 @@ sequenceDiagram
 ```
 ---
   
+
 
