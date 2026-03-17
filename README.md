@@ -181,21 +181,14 @@ flowchart LR
 
 ### 5.5 UART 1바이트 명령 처리(간결 프로토콜)
 ```mermaid
-sequenceDiagram
-  participant Host as "RPi / PC"
-  participant UART as "USART2 RX 인터럽트"
-  participant Q as "명령 큐"
-  participant Loop as "10ms 제어 루프"
-
-  Host->>UART: 1바이트 명령 전송 (w / a / s / d / x)
-  UART->>Q: 수신 바이트 저장
-  Loop->>Q: 명령 1개 가져오기
-
-  alt 장애물이 가까움 (&lt; 20cm)
-    Loop-->>Loop: 장애물 회피 우선<br/>정지 후 후진
-  else 정상 상태
-    Loop-->>Loop: 수신된 명령 실행
-  end
+flowchart LR
+    A["RPi 또는 PC"] -->|1바이트 명령 전송| B["USART2 RX 인터럽트"]
+    B -->|수신 바이트 저장| C["명령 큐"]
+    C -->|명령 1개 가져오기| D["10ms 제어 루프"]
+    D --> E{"장애물이 20cm 이내인가"}
+    E -->|예| F["장애물 회피 우선"]
+    F --> G["정지 후 후진"]
+    E -->|아니오| H["수신된 명령 실행"]
 ```
 ---
   
