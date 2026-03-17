@@ -1,7 +1,7 @@
 # STM32 (NUCLEO-F103RB) — 안전 우선 로봇 제어 펌웨어
 
-> **요약**: 초음파(눈) + PWM 모터(다리) + UART 명령(사람 말).  
-> 상황이 급하면 **항상 장애물 회피가 우선**, 평소엔 **한 글자 명령(w/a/s/d/x)**을 따른다.
+> **요약**: 초음파(회피) + PWM 모터 + UART 명령.  
+> 근처에 장애물이 있다면, **항상 장애물 회피가 우선**, 평소엔 Vision에 따라 **한 글자 명령(w/a/s/d/x)**을 따른다.
 
 ![Board](https://img.shields.io/badge/Board-NUCLEO--F103RB-blue)
 ![IDE](https://img.shields.io/badge/IDE-STM32CubeIDE%20%7C%20HAL-lightgrey)
@@ -37,7 +37,7 @@
 ```
 ---
 
-## 4) 스니펫(핵심)
+## 4) 핵심 코드 정리
 ### 4.1 우선순위 제어(10ms 루프)
 ```text
 void Control_Update(void){
@@ -55,7 +55,7 @@ void Control_Update(void){
 }
 ```
 
-### 4.2 초음파 입력캡처(상승↔하강 전환 핵심)
+### 4.2 초음파 입력캡처(ECHO<->TRIG)
 ```text
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 
@@ -78,7 +78,7 @@ if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){       // TIM2_CH4 예시
 }
 ```
 
-### 4.3 UART 1바이트 수신(링 버퍼 핵심)
+### 4.3 UART 1바이트 수신(명령어 하나 수신)
 ```text
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
   static uint8_t c;
